@@ -1,5 +1,7 @@
 package u05lab.code
 
+import u05lab.code.List.nil
+
 import scala.annotation.tailrec
 import scala.language.postfixOps // silence warnings
 
@@ -129,16 +131,33 @@ trait ListImplementation[A] extends List[A] {
   }
 
   override def partition(pred: A => Boolean): (List[A],List[A]) = {
-    (this.filter(pred), this.filter(Privates.not(pred)))
+    (this.filter(pred), this.filter(!pred(_)))
   }
 
-  override def span(pred: A => Boolean): (List[A],List[A]) = ???
+  override def span(pred: A => Boolean): (List[A],List[A]) = {
+    @tailrec
+    def _span(l:List[A], first:List[A]=nil): (List[A],List[A]) = l match {
+      case h :: t if pred(h) => _span(t, h::first)
+      case _ => (first.reverse(), l)
+    }
+    _span(this)
+  }
 
   /**
     *
     * @throws UnsupportedOperationException if the list is empty
     */
-  override def reduce(op: (A,A)=>A): A = ???
+  override def reduce(op: (A,A)=>A): A = {
+    def _reduce(l:List[A], acc:A): A = l match {
+      case h::t => _reduce(t, op(h,acc))
+      case _ => acc
+    }
+
+    this match {
+      case Nil() => throw new UnsupportedOperationException
+      case _ => _reduce(this.tail.get, this.get(0).get)
+    }
+  }
 
   override def takeRight(n: Int): List[A] = ???
 }
@@ -158,10 +177,6 @@ object List {
 
   def of[A](elem: A, n: Int): List[A] =
     if (n==0) Nil() else elem :: of(elem,n-1)
-}
-
-private object Privates {
-  def not[A](pred : A => Boolean): A => Boolean = (x:A) => !pred(x)
 }
 
 object ListsTest extends App {
