@@ -128,7 +128,9 @@ trait ListImplementation[A] extends List[A] {
     this.map( e => {k+=1; (e, k)})
   }
 
-  override def partition(pred: A => Boolean): (List[A],List[A]) = ???
+  override def partition(pred: A => Boolean): (List[A],List[A]) = {
+    (this.filter(pred), this.filter(Privates.not(pred)))
+  }
 
   override def span(pred: A => Boolean): (List[A],List[A]) = ???
 
@@ -156,6 +158,10 @@ object List {
 
   def of[A](elem: A, n: Int): List[A] =
     if (n==0) Nil() else elem :: of(elem,n-1)
+}
+
+private object Privates {
+  def not[A](pred : A => Boolean): A => Boolean = (x:A) => !pred(x)
 }
 
 object ListsTest extends App {
