@@ -41,6 +41,8 @@ sealed trait List[A] {
 
   def takeRight(n: Int): List[A]
 
+  def collect[B](pf: PartialFunction[A, B]): List[B]
+
   // right-associative construction: 10 :: 20 :: 30 :: Nil()
   def ::(head: A): List[A] = Cons(head,this)
 }
@@ -118,16 +120,12 @@ trait ListImplementation[A] extends List[A] {
   }
 
   override def zipRight: List[(A,Int)] = {
-    /*
     @tailrec
     def _zipRight(l: List[A], k: Int = 0, res: List[(A, Int)] = List.nil):List[(A, Int)] = l match {
       case h :: t=> _zipRight(t, k+1, (h, k) :: res)
       case _ => res
     }
     _zipRight(this).reverse()
-     */
-    var k = -1
-    this.map( e => {k+=1; (e, k)})
   }
 
   override def partition(pred: A => Boolean): (List[A],List[A]) = {
@@ -148,6 +146,7 @@ trait ListImplementation[A] extends List[A] {
     * @throws UnsupportedOperationException if the list is empty
     */
   override def reduce(op: (A,A)=>A): A = {
+    @tailrec
     def _reduce(l:List[A], acc:A): A = l match {
       case h::t => _reduce(t, op(h,acc))
       case _ => acc
@@ -159,7 +158,18 @@ trait ListImplementation[A] extends List[A] {
     }
   }
 
-  override def takeRight(n: Int): List[A] = ???
+  override def takeRight(n: Int): List[A] = {
+    @tailrec
+    def take(l:List[A], acc:List[A]=nil, n:Int = n):List[A] = l match {
+      case h :: t if n > 0 => take(t, h :: acc, n-1)
+      case _ => acc
+    }
+    take(this.reverse())
+  }
+
+  override def collect[B](pf: PartialFunction[A, B]): List[B] = {
+    this.filter(pf.isDefinedAt).map(pf.apply)
+  }
 }
 
 // Factories
@@ -215,5 +225,5 @@ object ListsTest extends App {
   println(l.takeRight(2)) // Cons(30,Cons(40,Nil()))
 
   // Ex. 6: collect
-  // println(l.collect { case x if x<15 || x>35 => x-1 }) // Cons(9, Cons(39, Nil()))
+  println(l.collect { case x if x<15 || x>35 => x-1 }) // Cons(9, Cons(39, Nil()))
 }
