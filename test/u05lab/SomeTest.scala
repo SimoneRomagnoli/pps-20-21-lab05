@@ -37,7 +37,7 @@ class SomeTest {
   def testReduce: Unit = {
     assertEquals(55, intList.reduce(_+_))
     assertEquals(1, singleElementList.reduce(_+_))
-    //assertThrows(new UnsupportedOperationException, empty.reduce(_+_))
+    assertThrows(classOf[UnsupportedOperationException], () => emptyList.reduce(_ + _))
   }
 
   @Test
