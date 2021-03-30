@@ -4,17 +4,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions._
 import code.List
 
-class SomeTest {
+class ListTest {
 
   val stringList = List("a", "b", "c")
   val intList = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
   val singleElementList = List(1)
   val emptyList: List[Int] = List.nil
-
-  @Test
-  def testIncremental() {
-    assert(true)
-  }
 
   @Test
   def testZipRight(): Unit = {
