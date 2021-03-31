@@ -1,5 +1,6 @@
 package u05lab.code
 
+import scala.collection.IterableOnce
 import scala.jdk.CollectionConverters._
 
 //-----------EXAM RESULTS-----------
@@ -36,13 +37,12 @@ object ExamResult extends ExamResultFactory {
   val PERFECT = 30
 
   private case class AbstractExamResult(kind:Kind, eval:Option[Int] = Option.empty, laude:Boolean = false) extends Result {
+
     override def getKind: Kind =
       kind
 
     override def getEvaluation: Option[Int] = kind match {
-      case SUCCEDED() =>
-        if (eval.get >= SUFFICIENT && eval.get <= PERFECT) eval
-        else throw new IllegalArgumentException
+      case SUCCEDED() => eval
       case _ => Option.empty
     }
 
@@ -57,7 +57,9 @@ object ExamResult extends ExamResultFactory {
     AbstractExamResult(RETIRED())
 
   override def succeded(evaluation: Int): Result =
-    AbstractExamResult(SUCCEDED(), Option.apply(evaluation))
+      if (evaluation < SUFFICIENT || evaluation > PERFECT)
+        throw new IllegalArgumentException
+      else AbstractExamResult(SUCCEDED(), Option.apply(evaluation))
 
   override def succededCumLaude: Result =
     AbstractExamResult(SUCCEDED(), Option.apply(PERFECT), true)
@@ -82,13 +84,15 @@ case class ExamsManagerImpl() extends ExamsManager {
 
   override def createNewCall(call: String): Unit = {
     check(!exams.contains(call))
-    exams += call -> Map.empty
+    exams = exams + (call -> Map.empty)
   }
 
   override def addStudentResult(call: String, student: String, result: Result): Unit = {
     check(exams.contains(call))
     check(!exams(call).contains(student))
-    exams(call) += (student -> result)
+    var exam = exams(call)
+    exam = exam + (student -> result)
+    exams = exams + (call -> exam)
   }
 
   override def getAllStudentsFromCall(call: String): Set[String] = {
@@ -98,22 +102,14 @@ case class ExamsManagerImpl() extends ExamsManager {
 
   override def getEvaluationsMapFromCall(call: String): Map[String, Int] = {
     check(exams.contains(call))
-    exams(call).collect({ case (s, r) if r.getKind == SUCCEDED => s -> r.getEvaluation.get })
+    exams(call).collect({ case (s, r) if r.getKind == SUCCEDED() => s -> r.getEvaluation.get })
   }
 
   override def getResultsMapFromStudent(student: String): Map[String, String] = {
-    exams.collect({case (exam, evals) if evals.contains(student) => exam -> exams(exam)(student).toString })
+    exams.collect({case (exam, evals) if evals.contains(student) => exam -> exams(exam)(student).getKind.toString })
   }
 
   override def getBestResultFromStudent(student: String): Option[Int] = {
-    exams.collectFirst({case (_, evals) if evals.contains(student) => evals.values.map(r => r.getEvaluation.get).max((x,y) => x-y) })
+    exams.collectFirst({case (_, evals) if evals.contains(student) => evals.collect({case (s,r) if s == student && r.getKind == SUCCEDED() => r.getEvaluation.get}).max((x:Int, y:Int)=>x-y) })
   }
-}
-
-
-//-----------TEST-----------
-object ExamsManagerTest extends App {
-
-  /* See: https://bitbucket.org/mviroli/oop2018-esami/src/master/a01b/e1/Test.java */
-
 }

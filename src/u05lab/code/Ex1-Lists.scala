@@ -226,4 +226,8 @@ object ListsTest extends App {
 
   // Ex. 6: collect
   println(l.collect { case x if x<15 || x>35 => x-1 }) // Cons(9, Cons(39, Nil()))
+
+
+
 }
+
